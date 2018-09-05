@@ -11,6 +11,10 @@ import android.view.View
  */
 class RadarDistanceView(context: Context) : View(context) {
 
+    companion object {
+        val TAG: String = RadarDistanceView::class.java.simpleName
+    }
+
     private var gradientStrokePaint: Paint = Paint()
     private var linePaint: Paint = Paint()
     private val gradientStrokeWidth = 15F
