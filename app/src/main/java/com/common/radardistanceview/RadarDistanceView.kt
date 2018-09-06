@@ -10,7 +10,7 @@ import android.view.View
 /**
  * Created by Kirill Stoianov on 05/09/18.
  */
-class RadarDistanceView(context: Context, attributeSet: AttributeSet?, deff: Int) : View(context, attributeSet, deff) {
+class RadarDistanceView(context: Context, attributeSet: AttributeSet?, def: Int) : View(context, attributeSet, def) {
 
     companion object {
         val TAG: String = RadarDistanceView::class.java.simpleName
@@ -57,8 +57,7 @@ class RadarDistanceView(context: Context, attributeSet: AttributeSet?, deff: Int
 
     private val pulsingCirclePaint by lazy {
         Paint().apply {
-            val lineColor: Int = ContextCompat.getColor(context, R.color.colorLine)
-            color = lineColor
+            color = ContextCompat.getColor(context, R.color.colorPulsing)
             style = Paint.Style.FILL_AND_STROKE
             isAntiAlias = true
             strokeWidth = 4f
@@ -134,7 +133,7 @@ class RadarDistanceView(context: Context, attributeSet: AttributeSet?, deff: Int
         canvas.drawBitmap(resourceBitmap, transformation, paint)
 
         drawLines(canvas, size)
-        drawAlphaCircle(canvas)
+        drawPulsingCircle(canvas)
 
         val xy = (Math.min(mainCanvas.width, mainCanvas.height) / 2) - (size / 2)
         mainCanvas.drawBitmap(output, xy, xy, Paint())
@@ -143,7 +142,6 @@ class RadarDistanceView(context: Context, attributeSet: AttributeSet?, deff: Int
     private fun drawLines(canvas: Canvas, circleDiameter: Float) {
         drawLineInsideCircle(canvas = canvas, segmentHeight = circleDiameter / 2, diameter = circleDiameter)
         drawLineInsideCircle(canvas = canvas, segmentHeight = circleDiameter / 4, diameter = circleDiameter, invert = true)
-
     }
 
     private fun drawLineInsideCircle(canvas: Canvas, segmentHeight: Float, diameter: Float, drawX: Boolean = true, drawY: Boolean = true, invert: Boolean = false) {
@@ -168,24 +166,42 @@ class RadarDistanceView(context: Context, attributeSet: AttributeSet?, deff: Int
         }
     }
 
-    //----------------------------------------------------------------------
-    //todo testing pulse animation
-    var pulsingCircleScaleFactor: Float = 0f
+
+    //TODO: -------------------- testing pulse animation -------------------------------------------
+
+    private var pulsingScaleFactor: Float = 0f
+    private var spsf = 0f
 
     fun setPulsingScaleFactor(value: Float) {
-        pulsingCircleScaleFactor = value
+        pulsingScaleFactor = value
         invalidate()
     }
 
-    //todo testing pulse animation
-    private fun drawAlphaCircle(canvas: Canvas) {
-        val newRadius = canvas.width * pulsingCircleScaleFactor
-
-        if (newRadius > (canvas.width / 2 - gradientStrokeWidth)) {
-        } else {
-            pulsingCirclePaint.alpha = 200 - (255 * pulsingCircleScaleFactor).toInt()
-            canvas.drawCircle(canvas.width / 2f, canvas.height / 2f, newRadius, pulsingCirclePaint)
-        }
+    fun setspsf(value: Float) {
+        spsf = value
+        invalidate()
     }
 
+    private fun drawPulsingCircle(canvas: Canvas) {
+
+        //draw first circle
+        var scaledRadius = (canvas.height * pulsingScaleFactor) / 2 //scale circle radius
+        var scaledAlpha = 70 - (pulsingScaleFactor * 70).toInt() //decrease alpha from 1 -> 0
+        pulsingCirclePaint.alpha = if (scaledAlpha <= 0) 0 else scaledAlpha
+
+        canvas.drawCircle(canvas.width / 2f, canvas.height / 2f, scaledRadius, pulsingCirclePaint)
+
+
+        //draw second circle
+        scaledRadius = (canvas.height * spsf) / 2 //scale circle radius
+        scaledAlpha = 70 - (spsf * 70).toInt() //decrease alpha from 1 -> 0
+        pulsingCirclePaint.alpha = if (scaledAlpha <= 0) 0 else scaledAlpha
+
+        canvas.drawCircle(canvas.width / 2f, canvas.height / 2f, scaledRadius, pulsingCirclePaint)
+    }
+
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+        resourceBitmap.recycle()
+    }
 }

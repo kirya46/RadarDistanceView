@@ -5,4 +5,5 @@
     <color name="colorAccent">#65600ccd</color>
 
     <color name="colorLine">#45ffffff</color>
+    <color name="colorPulsing">#00ffffff</color>
 </resources>

@@ -24,26 +24,36 @@ class MainActivity : AppCompatActivity() {
                 radarView.post {
                     val maxProgress = seekBar.max / 100f
                     val currentProgress = progress / 100f
-                    val angle = maxProgress - currentProgress
-                    radarView.setScaleFactor(angle)
+
+                    //decrease scale factor
+                    val scaleFactor = maxProgress - currentProgress
+                    radarView.setScaleFactor(scaleFactor)
                 }
             }
         })
 
-        radarView.setScaleFactor(seekBar.max / 100f)
+        //scale to 50% and than decrease scale factor
+        seekBar.progress = seekBar.max / 2
 
 
-
-
-        ValueAnimator.ofFloat(0f, 100f).apply {
+        //Pulse animation
+        ValueAnimator.ofFloat(0f, 1f).apply {
             addUpdateListener {
                 val animatedValue = it.animatedValue as Float
-                if (animatedValue == 100f) {
-                    radarView.setPulsingScaleFactor(1 / 100f)
-                } else {
-                    radarView.setPulsingScaleFactor(animatedValue / 100f)
-                }
+                radarView.setPulsingScaleFactor(animatedValue)
             }
+            duration = 5000
+            repeatMode = ValueAnimator.RESTART
+            repeatCount = ValueAnimator.INFINITE
+            start()
+        }
+
+        ValueAnimator.ofFloat(0f, 1f).apply {
+            addUpdateListener {
+                val animatedValue = it.animatedValue as Float
+                radarView.setspsf(animatedValue)
+            }
+            startDelay = 2500
             duration = 5000
             repeatMode = ValueAnimator.RESTART
             repeatCount = ValueAnimator.INFINITE
