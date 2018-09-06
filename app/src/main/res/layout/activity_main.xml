@@ -3,12 +3,22 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:clipChildren="false"
     tools:context=".MainActivity">
 
     <FrameLayout
         android:id="@+id/container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@drawable/bg" />
+        android:clipChildren="false"
+        android:background="@drawable/bg" >
+
+        <com.common.radardistanceview.RadarDistanceView
+            android:id="@+id/radar"
+            android:layout_width="248dp"
+            android:layout_height="248dp"
+            android:layout_gravity="center"/>
+
+    </FrameLayout>
 
 </LinearLayout>
