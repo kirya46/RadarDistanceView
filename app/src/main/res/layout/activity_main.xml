@@ -3,22 +3,23 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/bg"
     android:clipChildren="false"
+    android:gravity="center"
+    android:orientation="vertical"
     tools:context=".MainActivity">
 
-    <FrameLayout
-        android:id="@+id/container"
+    <com.common.radardistanceview.RadarDistanceView
+        android:id="@+id/radarView"
+        android:layout_width="248dp"
+        android:layout_height="248dp" />
+
+    <SeekBar
+        android:id="@+id/seekBar"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:clipChildren="false"
-        android:background="@drawable/bg" >
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:max="50" />
 
-        <com.common.radardistanceview.RadarDistanceView
-            android:id="@+id/radar"
-            android:layout_width="248dp"
-            android:layout_height="248dp"
-            android:layout_gravity="center"/>
-
-    </FrameLayout>
 
 </LinearLayout>
