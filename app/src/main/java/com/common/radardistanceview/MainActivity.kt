@@ -1,6 +1,5 @@
 package com.common.radardistanceview
 
-import android.animation.ValueAnimator
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.widget.SeekBar
@@ -37,27 +36,7 @@ class MainActivity : AppCompatActivity() {
 
 
         //Pulse animation
-        ValueAnimator.ofFloat(0f, 1f).apply {
-            addUpdateListener {
-                val animatedValue = it.animatedValue as Float
-                radarView.setPulsingScaleFactor(animatedValue)
-            }
-            duration = 5000
-            repeatMode = ValueAnimator.RESTART
-            repeatCount = ValueAnimator.INFINITE
-            start()
-        }
-
-        ValueAnimator.ofFloat(0f, 1f).apply {
-            addUpdateListener {
-                val animatedValue = it.animatedValue as Float
-                radarView.setspsf(animatedValue)
-            }
-            startDelay = 2500
-            duration = 5000
-            repeatMode = ValueAnimator.RESTART
-            repeatCount = ValueAnimator.INFINITE
-            start()
-        }
+        radarView.startPulsingPrimaryAnim()
+        radarView.startPulsingSecondaryAnim()
     }
 }

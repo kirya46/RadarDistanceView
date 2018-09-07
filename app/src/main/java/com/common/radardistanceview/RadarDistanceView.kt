@@ -1,5 +1,6 @@
 package com.common.radardistanceview
 
+import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.*
 import android.support.v4.content.ContextCompat
@@ -9,6 +10,15 @@ import android.view.View
 
 /**
  * Created by Kirill Stoianov on 05/09/18.
+ *
+ * Radar view with scaling background [Bitmap].
+ *
+ * For scale background image use [RadarDistanceView.scaleFactor] with range 0 -> 50.
+ *
+ * For animate pulsing circles use [setPulsingPrimaryScaleFactor] and [setPulsingSecondaryScaleFactor]
+ * in combination with [ValueAnimator] or [startPulsingPrimaryAnim] and [startPulsingSecondaryAnim].
+ *
+ * IMPORTANT NOTE: this view override [onMeasure] to make [RadarDistanceView] as square.
  */
 class RadarDistanceView(context: Context, attributeSet: AttributeSet?, def: Int) : View(context, attributeSet, def) {
 
@@ -23,14 +33,40 @@ class RadarDistanceView(context: Context, attributeSet: AttributeSet?, def: Int)
         setLayerType(LAYER_TYPE_HARDWARE, null)
     }
 
+    /**
+     * Scale factor of [resourceBitmap].
+     *
+     * Use range 0f -> .5f.
+     */
     private var scaleFactor = 0.0f
 
+    /**
+     * Scale factor for primary pulsing circle.
+     * Use range 0f -> 1f.
+     */
+    private var pulsingPrimaryScaleFactor: Float = 0f
+
+    /**
+     * Scale factor for secondary pulsing circle.
+     * Use range 0f -> 1f.
+     */
+    private var pulsingSecondaryScaleFactor: Float = 0f
+
+    /**
+     * Radar gradient stroke width.
+     */
     private val gradientStrokeWidth = 15F
 
+    /**
+     * Source bitmap which must be scaled.
+     */
     private val resourceBitmap: Bitmap by lazy {
         BitmapFactory.decodeResource(context.resources, R.drawable.img_kasha_radar)
     }
 
+    /**
+     * Paint for radar gradient stroke.
+     */
     private val mainGradientStrokePaint by lazy {
         Paint().apply {
             val shadowColor: Int = Color.TRANSPARENT
@@ -45,6 +81,9 @@ class RadarDistanceView(context: Context, attributeSet: AttributeSet?, def: Int)
         }
     }
 
+    /**
+     * Paint for radar grid lines.
+     */
     private val linePaint by lazy {
         Paint().apply {
             val lineColor: Int = ContextCompat.getColor(context, R.color.colorLine)
@@ -55,6 +94,9 @@ class RadarDistanceView(context: Context, attributeSet: AttributeSet?, def: Int)
         }
     }
 
+    /**
+     * Paint for pulsing circles.
+     */
     private val pulsingCirclePaint by lazy {
         Paint().apply {
             color = ContextCompat.getColor(context, R.color.colorPulsing)
@@ -64,6 +106,9 @@ class RadarDistanceView(context: Context, attributeSet: AttributeSet?, def: Int)
         }
     }
 
+    /**
+     * Paint for inner circle.
+     */
     private val transparentCirclePaint by lazy {
         Paint().apply {
             color = Color.TRANSPARENT
@@ -85,11 +130,43 @@ class RadarDistanceView(context: Context, attributeSet: AttributeSet?, def: Int)
         drawImage(canvas)
     }
 
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+
+        //Recycle bitmap when view detach from window
+        resourceBitmap.recycle()
+    }
+
+    /**
+     * Set scale factor for [resourceBitmap].
+     */
     fun setScaleFactor(value: Float) {
         scaleFactor = value
         invalidate()
     }
 
+    /**
+     * Set scale factor for primary pulsing circle.
+     * Use range 0f -> 1f
+     */
+    fun setPulsingPrimaryScaleFactor(value: Float) {
+        pulsingPrimaryScaleFactor = value
+        invalidate()
+    }
+
+    /**
+     * Set scale factor for secondary pulsing circle.
+     * Use range 0f -> 1f
+     */
+    fun setPulsingSecondaryScaleFactor(value: Float) {
+        pulsingSecondaryScaleFactor = value
+        invalidate()
+    }
+
+
+    /**
+     * Draw radar circle gradient stroke.
+     */
     private fun drawGradientStroke(canvas: Canvas) {
         val width: Float = canvas.width.toFloat()
         val height: Float = canvas.height.toFloat()
@@ -98,6 +175,9 @@ class RadarDistanceView(context: Context, attributeSet: AttributeSet?, def: Int)
         canvas.drawCircle(width / 2, height / 2, radius - gradientStrokeWidth, transparentCirclePaint)
     }
 
+    /**
+     * Draw radar scaled image.
+     */
     private fun drawImage(mainCanvas: Canvas) {
 
         val size = (Math.min(mainCanvas.width, mainCanvas.height) - gradientStrokeWidth)
@@ -139,11 +219,24 @@ class RadarDistanceView(context: Context, attributeSet: AttributeSet?, def: Int)
         mainCanvas.drawBitmap(output, xy, xy, Paint())
     }
 
+    /**
+     * Draw radar grid lines in circle.
+     */
     private fun drawLines(canvas: Canvas, circleDiameter: Float) {
         drawLineInsideCircle(canvas = canvas, segmentHeight = circleDiameter / 2, diameter = circleDiameter)
         drawLineInsideCircle(canvas = canvas, segmentHeight = circleDiameter / 4, diameter = circleDiameter, invert = true)
     }
 
+    /**
+     * Draw radar grid lines.
+     *
+     * @param canvas - destination canvas
+     * @param segmentHeight - line distance from x0 y0 coordinates of circle
+     * @param diameter - circle diameter
+     * @param drawX - is need draw line on x-asix
+     * @param drawY - is need draw line on y-asix
+     * @param invert - is need draw destination line on mirror circle sector.
+     */
     private fun drawLineInsideCircle(canvas: Canvas, segmentHeight: Float, diameter: Float, drawX: Boolean = true, drawY: Boolean = true, invert: Boolean = false) {
         val aAngle = Math.acos(1 - (2 * (segmentHeight)).toDouble() / diameter)
         val chordLength = diameter * Math.sin(aAngle)
@@ -166,42 +259,63 @@ class RadarDistanceView(context: Context, attributeSet: AttributeSet?, def: Int)
         }
     }
 
-
-    //TODO: -------------------- testing pulse animation -------------------------------------------
-
-    private var pulsingScaleFactor: Float = 0f
-    private var spsf = 0f
-
-    fun setPulsingScaleFactor(value: Float) {
-        pulsingScaleFactor = value
-        invalidate()
-    }
-
-    fun setspsf(value: Float) {
-        spsf = value
-        invalidate()
-    }
-
+    /**
+     * Draw pulsing circles.
+     *
+     * @see startPulsingPrimaryAnim
+     * @see startPulsingSecondaryAnim
+     */
     private fun drawPulsingCircle(canvas: Canvas) {
 
         //draw first circle
-        var scaledRadius = (canvas.height * pulsingScaleFactor) / 2 //scale circle radius
-        var scaledAlpha = 70 - (pulsingScaleFactor * 70).toInt() //decrease alpha from 1 -> 0
+        var scaledRadius = (canvas.height * pulsingPrimaryScaleFactor) / 2 //scale circle radius
+        var scaledAlpha = 70 - (pulsingPrimaryScaleFactor * 70).toInt() //decrease alpha from 1 -> 0
         pulsingCirclePaint.alpha = if (scaledAlpha <= 0) 0 else scaledAlpha
 
         canvas.drawCircle(canvas.width / 2f, canvas.height / 2f, scaledRadius, pulsingCirclePaint)
 
 
         //draw second circle
-        scaledRadius = (canvas.height * spsf) / 2 //scale circle radius
-        scaledAlpha = 70 - (spsf * 70).toInt() //decrease alpha from 1 -> 0
+        scaledRadius = (canvas.height * pulsingSecondaryScaleFactor) / 2 //scale circle radius
+        scaledAlpha = 70 - (pulsingSecondaryScaleFactor * 70).toInt() //decrease alpha from 1 -> 0
         pulsingCirclePaint.alpha = if (scaledAlpha <= 0) 0 else scaledAlpha
 
         canvas.drawCircle(canvas.width / 2f, canvas.height / 2f, scaledRadius, pulsingCirclePaint)
     }
 
-    override fun onDetachedFromWindow() {
-        super.onDetachedFromWindow()
-        resourceBitmap.recycle()
+    /**
+     * Animate primary pulsing circle.
+     * By default use range 0f -> 1f
+     */
+    fun startPulsingPrimaryAnim(from: Float = 0f, to: Float = 1f) {
+        ValueAnimator.ofFloat(from, to).apply {
+            addUpdateListener {
+                val animatedValue = it.animatedValue as Float
+                this@RadarDistanceView.setPulsingPrimaryScaleFactor(animatedValue)
+            }
+            duration = 5000
+            repeatMode = ValueAnimator.RESTART
+            repeatCount = ValueAnimator.INFINITE
+            start()
+        }
     }
+
+    /**
+     * Animate secondary pulsing circle.
+     * By default use range 0f -> 1f
+     */
+    fun startPulsingSecondaryAnim(from: Float = 0f, to: Float = 1f) {
+        ValueAnimator.ofFloat(from, to).apply {
+            addUpdateListener {
+                val animatedValue = it.animatedValue as Float
+                this@RadarDistanceView.setPulsingSecondaryScaleFactor(animatedValue)
+            }
+            startDelay = 2500
+            duration = 5000
+            repeatMode = ValueAnimator.RESTART
+            repeatCount = ValueAnimator.INFINITE
+            start()
+        }
+    }
+
 }
