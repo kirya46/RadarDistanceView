@@ -3,7 +3,6 @@ package com.common.radardistanceview
 import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.*
-import android.support.v4.content.ContextCompat
 import android.util.AttributeSet
 import android.view.View
 
@@ -55,7 +54,13 @@ class RadarDistanceView(context: Context, attributeSet: AttributeSet?, def: Int)
     /**
      * Radar gradient stroke width.
      */
-    private val gradientStrokeWidth = 15F
+    private val gradientStrokeWidth by lazy {
+        15 / resources.displayMetrics.density
+    }
+
+    private val gridLineStrokeWidth by lazy {
+        4 / resources.displayMetrics.density
+    }
 
     /**
      * Source bitmap which must be scaled.
@@ -86,11 +91,11 @@ class RadarDistanceView(context: Context, attributeSet: AttributeSet?, def: Int)
      */
     private val linePaint by lazy {
         Paint().apply {
-            val lineColor: Int = ContextCompat.getColor(context, R.color.colorLine)
+            val lineColor = Color.parseColor("#45ffffff")
             color = lineColor
             style = Paint.Style.FILL_AND_STROKE
             isAntiAlias = true
-            strokeWidth = 4f
+            strokeWidth = gridLineStrokeWidth
         }
     }
 
@@ -99,7 +104,7 @@ class RadarDistanceView(context: Context, attributeSet: AttributeSet?, def: Int)
      */
     private val pulsingCirclePaint by lazy {
         Paint().apply {
-            color = ContextCompat.getColor(context, R.color.colorPulsing)
+            color = Color.parseColor("#00ffffff")
             style = Paint.Style.FILL_AND_STROKE
             isAntiAlias = true
             strokeWidth = 4f
@@ -192,7 +197,7 @@ class RadarDistanceView(context: Context, attributeSet: AttributeSet?, def: Int)
         canvas.drawARGB(0, 0, 0, 0)
         paint.color = color
 
-        canvas.drawCircle(size / 2f, size / 2f, size / 2f, paint)
+        canvas.drawCircle(size / 2f, size / 2f, (size - gradientStrokeWidth) / 2f, paint)
 
         paint.xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC_IN)
 
@@ -304,13 +309,13 @@ class RadarDistanceView(context: Context, attributeSet: AttributeSet?, def: Int)
      * Animate secondary pulsing circle.
      * By default use range 0f -> 1f
      */
-    fun startPulsingSecondaryAnim(from: Float = 0f, to: Float = 1f) {
+    fun startPulsingSecondaryAnim(from: Float = 0f, to: Float = 1f, startDelay: Long = 2500) {
         ValueAnimator.ofFloat(from, to).apply {
             addUpdateListener {
                 val animatedValue = it.animatedValue as Float
                 this@RadarDistanceView.setPulsingSecondaryScaleFactor(animatedValue)
             }
-            startDelay = 2500
+            this.startDelay = startDelay
             duration = 5000
             repeatMode = ValueAnimator.RESTART
             repeatCount = ValueAnimator.INFINITE
